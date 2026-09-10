@@ -178,5 +178,11 @@ async function startServer() {
     });
 }
 
+async function initializePaymentService() {
+    // Placeholder startup initialization to prevent runtime failure.
+    // In a real service, this would validate configuration and establish connections.
+    return;
+}
+
 // BUG 11: Undefined function
 startServer();
