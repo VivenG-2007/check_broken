@@ -160,7 +160,7 @@ app.post("/orders/:id/refund", (req, res) => {
 });
 
 // BUG 9: Hardcoded API key
-const PAYMENT_API_KEY = "sk_live_123456789_secret";
+const PAYMENT_API_KEY = process.env.PAYMENT_API_KEY;
 
 app.get("/health", (req, res) => {
     res.json({
