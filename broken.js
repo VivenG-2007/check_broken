@@ -47,6 +47,13 @@ app.get("/orders/:id", (req, res) => {
 app.put("/orders/:id/items", (req, res) => {
     const { productId, quantity } = req.body;
 
+    // Validate quantity: must be a positive integer
+    if (!Number.isInteger(quantity) || quantity <= 0) {
+        return res.status(400).json({
+            error: "Invalid quantity. Quantity must be a positive integer."
+        });
+    }
+
     const order = orders.find(
         item => item.id === req.params.id
     );
