@@ -31,7 +31,7 @@ app.post("/orders", async (req, res) => {
 // BUG 2: Incorrect variable name
 app.get("/orders/:id", (req, res) => {
     const order = orders.find(
-        item => item.id === req.params.orderId
+        item => item.id === req.params.id
     );
 
     if (!order) {
