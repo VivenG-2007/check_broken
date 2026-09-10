@@ -93,9 +93,8 @@ app.post("/orders/:id/pay", async (req, res) => {
 
 // BUG 5: Sensitive information returned
 app.get("/debug/orders", (req, res) => {
-    res.json({
-        environment: process.env,
-        orders
+    return res.status(404).json({
+        error: "Not found"
     });
 });
 
