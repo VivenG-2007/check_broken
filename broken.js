@@ -87,6 +87,15 @@ app.post("/orders/:id/pay", async (req, res) => {
 
     order.status = "paid";
     order.paymentId = req.body.paymentId;
+    // Authoritative payment record for refund validation (server-side source of truth)
+    order.payment = {
+        id: order.paymentId,
+        amount: Number(order.total),
+        currency: "USD",
+        captured: true,
+        refundedAmount: 0,
+        createdAt: new Date()
+    };
 
     res.json(order);
 });
@@ -145,16 +154,55 @@ app.post("/orders/:id/refund", (req, res) => {
         });
     }
 
-    const refundAmount = req.body.amount;
+    // Validate refund amount server-side using authoritative transaction data and business rules
+    if (order.status !== "paid") {
+        return res.status(400).json({
+            error: "Order not eligible for refund"
+        });
+    }
 
-    if (refundAmount > order.total) {
+    if (!order.payment || typeof order.payment.amount !== "number" || !Number.isFinite(order.payment.amount)) {
+        return res.status(400).json({
+            error: "No valid payment record found for order"
+        });
+    }
+
+    const rawAmount = req.body && req.body.amount;
+    const refundAmount = typeof rawAmount === "string" ? Number(rawAmount) : rawAmount;
+
+    if (typeof refundAmount !== "number" || !Number.isFinite(refundAmount)) {
         return res.status(400).json({
             error: "Invalid refund amount"
         });
     }
 
-    order.status = "refunded";
-    order.refundedAmount = refundAmount;
+    if (refundAmount <= 0) {
+        return res.status(400).json({
+            error: "Invalid refund amount"
+        });
+    }
+
+    const alreadyRefunded = typeof order.payment.refundedAmount === "number" && Number.isFinite(order.payment.refundedAmount)
+        ? order.payment.refundedAmount
+        : 0;
+
+    const remainingRefundable = order.payment.amount - alreadyRefunded;
+
+    if (refundAmount > remainingRefundable) {
+        return res.status(400).json({
+            error: "Invalid refund amount"
+        });
+    }
+
+    order.payment.refundedAmount = alreadyRefunded + refundAmount;
+
+    if (order.payment.refundedAmount >= order.payment.amount) {
+        order.status = "refunded";
+    } else {
+        order.status = "partially_refunded";
+    }
+
+    order.refundedAmount = order.payment.refundedAmount;
 
     res.json(order);
 });
