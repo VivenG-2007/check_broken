@@ -10,6 +10,20 @@ const PORT = process.env.PORT || 4000;
 
 const orders = [];
 
+function calculateOrderTotal(items) {
+    if (!Array.isArray(items)) return 0;
+
+    return items.reduce((sum, item) => {
+        const quantity = Number(item?.quantity);
+        const price = Number(item?.price);
+
+        const safeQuantity = Number.isFinite(quantity) ? quantity : 0;
+        const safePrice = Number.isFinite(price) ? price : 0;
+
+        return sum + safeQuantity * safePrice;
+    }, 0);
+}
+
 // BUG 1: Missing input validation
 app.post("/orders", async (req, res) => {
     const { customerId, items, total } = req.body;
